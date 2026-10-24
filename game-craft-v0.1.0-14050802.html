@@ -1,0 +1,2331 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#F5F0E8">
+<title>GameCraft — سازنده پرامپت بازی</title>
+
+<style>
+/* =========================================
+   1. DESIGN TOKENS — Claude Warm Palette
+   Light + Dark themes
+========================================= */
+:root {
+  /* Light — warm cream like Claude */
+  --bg: #F5F0E8;
+  --bg-alt: #EFE8DD;
+  --surface: #FFFCF7;
+  --surface-2: #EFE8DD;
+  --surface-3: #E8DFD1;
+  --text: #292722;
+  --text-soft: #4A443B;
+  --muted: #797267;
+  --muted-2: #9A9184;
+  --border: #DED5C8;
+  --border-strong: #C9BDA9;
+
+  --primary: #C96442;
+  --primary-hover: #AE5032;
+  --primary-soft: #F4DFD4;
+  --primary-soft-2: #F9EDE6;
+
+  --success: #47745A;
+  --success-soft: #DDEAE1;
+  --danger: #B3261E;
+  --danger-soft: #F9DEDC;
+  --info: #5B6B8A;
+  --info-soft: #DEE4F2;
+
+  --shadow-sm: 0 1px 2px rgba(60, 45, 30, .05), 0 1px 3px rgba(60, 45, 30, .04);
+  --shadow: 0 8px 28px rgba(60, 45, 30, .07);
+  --shadow-lg: 0 16px 40px rgba(60, 45, 30, .12);
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-full: 9999px;
+
+  --font: 'Vazirmatn', 'Segoe UI', Tahoma, Arial, sans-serif;
+  --ease: cubic-bezier(.2, 0, 0, 1);
+  --dur: 200ms;
+}
+
+[data-theme="dark"] {
+  --bg: #1F1D1A;
+  --bg-alt: #262320;
+  --surface: #2A2724;
+  --surface-2: #332F2B;
+  --surface-3: #3D3833;
+  --text: #F5EFE6;
+  --text-soft: #E0D8CC;
+  --muted: #A9A093;
+  --muted-2: #857C6F;
+  --border: #423C36;
+  --border-strong: #5A524A;
+
+  --primary: #E07B54;
+  --primary-hover: #EC8C67;
+  --primary-soft: #4A2E22;
+  --primary-soft-2: #3A2A22;
+
+  --success: #7FB894;
+  --success-soft: #23372B;
+  --danger: #E88982;
+  --danger-soft: #3E1F1D;
+  --info: #8FA3C9;
+  --info-soft: #232B3D;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .3);
+  --shadow: 0 8px 28px rgba(0, 0, 0, .35);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, .5);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+
+:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.hidden { display: none !important; }
+
+/* =========================================
+   2. TOP APP BAR
+========================================= */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: var(--primary);
+  color: white;
+  border-radius: 12px;
+  font-size: 20px;
+}
+
+.brand-text { display: flex; flex-direction: column; line-height: 1.3; }
+.brand-name { font-size: 16px; font-weight: 800; letter-spacing: -.3px; }
+.brand-caption { font-size: 11px; color: var(--muted); }
+
+.header-actions { display: flex; align-items: center; gap: 8px; }
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: var(--text-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  font-size: 16px;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.icon-btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
+
+/* =========================================
+   3. BUTTONS
+========================================= */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 13px;
+  transition: all var(--dur) var(--ease);
+  white-space: nowrap;
+}
+.btn:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+.btn:active:not(:disabled) { transform: translateY(0); }
+
+.btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-tonal {
+  background: var(--primary-soft);
+  border-color: transparent;
+  color: var(--primary);
+}
+.btn-tonal:hover:not(:disabled) {
+  background: var(--primary-soft-2);
+}
+
+.btn-quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+}
+.btn-quiet:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.btn-small { min-height: 34px; padding: 6px 12px; font-size: 12px; }
+
+/* =========================================
+   4. LAYOUT
+========================================= */
+.app-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+
+.hero { text-align: center; max-width: 650px; margin: 16px auto 32px; }
+
+.hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.hero h1 {
+  font-size: clamp(27px, 4vw, 42px);
+  line-height: 1.4;
+  margin: 15px 0 8px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+.hero h1 span { color: var(--primary); }
+
+.hero p {
+  color: var(--muted);
+  font-size: 14px;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.wizard-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+/* =========================================
+   5. SIDEBAR / STEPPER
+========================================= */
+.sidebar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 12px;
+  position: sticky;
+  top: 84px;
+  box-shadow: var(--shadow-sm);
+}
+
+.sidebar-title {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 10px 12px;
+  font-weight: 700;
+}
+
+.steps-list { display: flex; flex-direction: column; gap: 4px; }
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  text-align: right;
+  border-radius: 12px;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.step-item:hover { background: var(--surface-2); color: var(--text-soft); }
+
+.step-item.active {
+  background: var(--primary-soft);
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+  color: var(--text);
+}
+
+.step-item.completed .step-number {
+  background: var(--success);
+  color: white;
+}
+
+.step-number {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  transition: all var(--dur) var(--ease);
+}
+
+.step-item.active .step-number {
+  background: var(--primary);
+  color: white;
+}
+
+.step-info { display: flex; flex-direction: column; min-width: 0; }
+.step-label { font-size: 12px; font-weight: 700; }
+.step-description { font-size: 10px; opacity: .8; margin-top: 1px; }
+
+.sidebar-progress {
+  margin: 18px 10px 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 10px;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.progress-track {
+  height: 6px;
+  background: var(--surface-2);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--primary);
+  border-radius: inherit;
+  transition: width 300ms var(--ease);
+}
+
+/* =========================================
+   6. WIZARD CARD
+========================================= */
+.wizard-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  min-width: 0;
+  box-shadow: var(--shadow);
+}
+
+.wizard-header {
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.step-kicker {
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.step-heading {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.5;
+  font-weight: 800;
+  letter-spacing: -.4px;
+}
+
+.step-subtitle {
+  color: var(--muted);
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+
+.wizard-content {
+  padding: 24px 28px 28px;
+  min-height: 340px;
+}
+
+.wizard-footer {
+  padding: 16px 28px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: color-mix(in srgb, var(--surface) 80%, var(--bg));
+}
+
+.footer-hint {
+  font-size: 11px;
+  color: var(--muted);
+  flex: 1;
+  text-align: center;
+}
+
+/* =========================================
+   7. FORM FIELDS
+========================================= */
+.field { margin-bottom: 24px; }
+.field:last-child { margin-bottom: 0; }
+
+.field-label {
+  display: block;
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.field-hint {
+  color: var(--muted);
+  font-size: 11px;
+  margin: -2px 0 10px;
+}
+
+.text-input,
+.text-area,
+.select-input {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
+  font-size: 14px;
+}
+
+.text-input:hover,
+.text-area:hover,
+.select-input:hover { border-color: var(--border-strong); }
+
+.text-input:focus,
+.text-area:focus,
+.select-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.text-area { min-height: 110px; resize: vertical; }
+
+.text-input::placeholder,
+.text-area::placeholder {
+  color: var(--muted-2);
+}
+
+/* =========================================
+   8. OPTION CARDS
+========================================= */
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.option-card { position: relative; min-width: 0; }
+
+.option-card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.option-card label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-height: 106px;
+  height: 100%;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+  position: relative;
+}
+
+.option-card label:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.option-card input:checked + label {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.option-card input:focus-visible + label {
+  outline: 3px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  outline-offset: 2px;
+}
+
+.option-card input[type="checkbox"] + label::after,
+.option-card input[type="radio"] + label::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  transition: all var(--dur) var(--ease);
+}
+
+.option-card input[type="checkbox"] + label::after { border-radius: 5px; }
+
+.option-card input:checked + label::after {
+  content: "✓";
+  display: grid;
+  place-items: center;
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.option-icon { font-size: 24px; line-height: 1.3; }
+.option-title { font-size: 12px; font-weight: 700; }
+.option-description {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+/* =========================================
+   9. CHOICE PILLS
+========================================= */
+.choice-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.choice-pill { position: relative; }
+
+.choice-pill input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.choice-pill label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-soft);
+  transition: all var(--dur) var(--ease);
+}
+
+.choice-pill label:hover { border-color: var(--border-strong); background: var(--surface-2); }
+
+.choice-pill input:checked + label {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.choice-pill input:focus-visible + label {
+  outline: 3px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  outline-offset: 2px;
+}
+
+/* =========================================
+   10. DIVIDER / HELP / CONDITIONAL
+========================================= */
+.section-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 24px 0;
+}
+
+.conditional-field {
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--surface-2);
+  border-radius: 14px;
+  animation: fadeIn 200ms var(--ease);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.help-box {
+  margin-top: 18px;
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, var(--border));
+  background: var(--primary-soft-2);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.help-box summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  user-select: none;
+}
+
+.help-box summary::-webkit-details-marker { display: none; }
+
+.help-box summary::after {
+  content: "+";
+  margin-right: auto;
+  font-size: 18px;
+  color: var(--primary);
+  font-weight: 700;
+  transition: transform var(--dur) var(--ease);
+}
+
+.help-box[open] summary::after { content: "−"; }
+
+.help-content {
+  padding: 0 16px 16px;
+  color: var(--text-soft);
+  font-size: 12px;
+}
+
+.help-content p { margin: 0 0 8px; }
+.help-content p:last-child { margin-bottom: 0; }
+.help-content strong { color: var(--text); }
+
+/* =========================================
+   11. SUMMARY CHIPS
+========================================= */
+.summary-card {
+  margin-top: 20px;
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.summary-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.summary-count {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-radius: var(--radius-full);
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.summary-content { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.summary-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  border-radius: var(--radius-full);
+  padding: 5px 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.summary-chip strong { color: var(--text); font-weight: 700; }
+
+.summary-empty {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* =========================================
+   12. COMPLEXITY CARDS
+========================================= */
+.complexity-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.complexity-card { position: relative; }
+.complexity-card input { position: absolute; opacity: 0; }
+
+.complexity-card label {
+  display: block;
+  height: 100%;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+}
+
+.complexity-card label:hover { border-color: var(--border-strong); }
+
+.complexity-card input:checked + label {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.complexity-card strong { display: block; font-size: 12px; margin-bottom: 4px; }
+.complexity-card span { display: block; font-size: 10px; color: var(--muted); }
+
+/* =========================================
+   13. TECH NOTE
+========================================= */
+.tech-note {
+  padding: 13px 16px;
+  background: var(--primary-soft-2);
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, var(--border));
+  color: var(--text-soft);
+  border-radius: 12px;
+  font-size: 11px;
+  margin-top: 12px;
+  line-height: 1.8;
+}
+.tech-note strong { color: var(--text); }
+
+/* =========================================
+   14. REVIEW & PROMPT
+========================================= */
+.review-warning {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--primary-soft-2);
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, var(--border));
+  font-size: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 8px;
+  color: var(--text-soft);
+}
+
+.review-list { display: grid; gap: 8px; margin-bottom: 20px; }
+
+.review-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.review-label {
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 2px;
+  font-weight: 700;
+}
+
+.review-value {
+  font-size: 12px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.prompt-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 16px 0 10px;
+}
+
+.prompt-toolbar-title { font-size: 13px; font-weight: 800; }
+
+.prompt-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.prompt-preview {
+  background: #1F1D1A;
+  color: #F5EFE6;
+  border-radius: 16px;
+  padding: 18px;
+  max-height: 440px;
+  overflow: auto;
+  direction: rtl;
+  text-align: right;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--font);
+  font-size: 12px;
+  line-height: 2;
+  border: 1px solid #3A3632;
+  margin: 0;
+}
+
+[data-theme="dark"] .prompt-preview {
+  background: #14120F;
+  border-color: #2A2724;
+}
+
+.prompt-preview:focus { outline: 2px solid var(--primary); }
+
+/* راهنمای زیر دکمه‌های مرحله ۸ */
+.prompt-guide {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.prompt-guide summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  user-select: none;
+}
+.prompt-guide summary::-webkit-details-marker { display: none; }
+
+.prompt-guide summary::after {
+  content: "+";
+  margin-right: auto;
+  font-size: 20px;
+  color: var(--primary);
+  font-weight: 700;
+  transition: transform var(--dur) var(--ease);
+}
+.prompt-guide[open] summary::after { content: "−"; }
+
+.prompt-guide-content {
+  padding: 0 16px 16px;
+  font-size: 12px;
+  color: var(--text-soft);
+  line-height: 2;
+}
+
+.prompt-guide-content ol {
+  margin: 0 0 8px;
+  padding-right: 20px;
+}
+
+.prompt-guide-content ol li { margin-bottom: 8px; }
+.prompt-guide-content strong { color: var(--text); }
+
+.prompt-guide-content .guide-tip {
+  padding: 10px 12px;
+  background: var(--primary-soft-2);
+  border-right: 3px solid var(--primary);
+  border-radius: 8px;
+  margin-top: 10px;
+  font-size: 11px;
+}
+
+/* =========================================
+   15. TOAST
+========================================= */
+.toast-stack {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  pointer-events: none;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #F5EFE6;
+  background: #2A2724;
+  border: 1px solid #3D3833;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transform: translateY(16px) scale(.98);
+  transition: opacity 240ms var(--ease), transform 240ms var(--ease);
+  pointer-events: auto;
+  max-width: 100%;
+  line-height: 1.5;
+}
+
+[data-theme="dark"] .toast {
+  background: #F5EFE6;
+  color: #1F1D1A;
+  border-color: #DED5C8;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.toast-icon {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 900;
+  background: rgba(255, 255, 255, .15);
+  color: inherit;
+}
+
+[data-theme="dark"] .toast-icon { background: rgba(0, 0, 0, .12); }
+
+.toast.toast-success .toast-icon { background: var(--success); color: white; }
+.toast.toast-error .toast-icon { background: var(--danger); color: white; }
+.toast.toast-info .toast-icon { background: var(--info); color: white; }
+
+.toast-message { flex: 1; }
+
+.toast-close {
+  background: transparent;
+  border: none;
+  color: inherit;
+  opacity: .6;
+  font-size: 16px;
+  padding: 0 0 0 4px;
+  cursor: pointer;
+}
+.toast-close:hover { opacity: 1; }
+
+/* =========================================
+   16. RESPONSIVE
+========================================= */
+@media (max-width: 800px) {
+  .wizard-layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; padding: 12px; }
+  .sidebar-title, .sidebar-progress { display: none; }
+  .steps-list {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 6px;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+  }
+  .step-item {
+    flex: 0 0 auto;
+    width: 44px;
+    justify-content: center;
+    padding: 6px;
+  }
+  .step-info { display: none; }
+  .option-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero { margin-top: 8px; }
+}
+
+@media (max-width: 480px) {
+  .app-header { padding: 10px 14px; }
+  .app-container { padding: 16px 12px 48px; }
+  .brand-caption { display: none; }
+  .hero h1 { font-size: 26px; }
+  .wizard-header { padding: 20px 17px 16px; }
+  .wizard-content { padding: 20px 17px 24px; min-height: 300px; }
+  .wizard-footer { padding: 14px 17px; flex-wrap: wrap; }
+  .footer-hint { display: none; }
+  .step-heading { font-size: 19px; }
+  .option-grid { gap: 8px; }
+  .option-card label { min-height: 98px; padding: 12px; }
+  .complexity-grid { grid-template-columns: 1fr; }
+  .btn { padding: 10px 14px; font-size: 12px; }
+  .prompt-preview { padding: 14px; max-height: 340px; }
+  .toast { padding: 10px 14px; font-size: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- TOP APP BAR -->
+<header class="app-header">
+  <div class="brand">
+    <div class="brand-icon" aria-hidden="true">✳</div>
+    <div class="brand-text">
+      <div class="brand-name">GameCraft</div>
+      <div class="brand-caption">ایده‌ات را به بازی تبدیل کن</div>
+    </div>
+  </div>
+
+  <div class="header-actions">
+    <button class="icon-btn" id="themeToggle" type="button" title="تغییر تم" aria-label="تغییر تم">🌙</button>
+    <button class="btn btn-small btn-quiet" id="resetBtn" type="button">↺ شروع مجدد</button>
+  </div>
+</header>
+
+<main class="app-container">
+
+  <section class="hero">
+    <div class="hero-chip">
+      <span>✦</span>
+      <span>از ایده تا پرامپت</span>
+    </div>
+    <h1>بازی خودت را <span>طراحی کن!</span></h1>
+    <p>
+      به چند سؤال ساده جواب بده، ویژگی‌های بازی‌ات را انتخاب کن
+      و در پایان یک پرامپت آماده برای هوش مصنوعی تحویل بگیر.
+      لازم نیست برنامه‌نویسی بلد باشی.
+    </p>
+  </section>
+
+  <section class="wizard-layout">
+
+    <aside class="sidebar">
+      <p class="sidebar-title">مراحل طراحی بازی</p>
+      <nav class="steps-list" id="stepsList" aria-label="مراحل ویزارد"></nav>
+
+      <div class="sidebar-progress">
+        <div class="progress-meta">
+          <span>پیشرفت</span>
+          <span id="progressText">مرحله ۱ از ۸</span>
+        </div>
+        <div
+          class="progress-track"
+          role="progressbar"
+          aria-label="پیشرفت مراحل"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="12"
+          id="progressTrack"
+        >
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="wizard-card" aria-live="polite">
+      <header class="wizard-header">
+        <div class="step-kicker" id="stepKicker">مرحله ۱</div>
+        <h2 class="step-heading" id="stepHeading">چه بازی‌ای در ذهن داری؟</h2>
+        <p class="step-subtitle" id="stepSubtitle">
+          یک نوع بازی انتخاب کن یا ایده خودت را توضیح بده.
+        </p>
+      </header>
+
+      <div class="wizard-content" id="wizardContent"></div>
+
+      <footer class="wizard-footer">
+        <button type="button" class="btn" id="prevBtn" disabled>
+          ← مرحله قبل
+        </button>
+        <span class="footer-hint" id="footerHint">
+          انتخاب‌ها ذخیره می‌شوند؛ هر زمان خواستی می‌توانی برگردی.
+        </span>
+        <button type="button" class="btn btn-primary" id="nextBtn">
+          مرحله بعد →
+        </button>
+      </footer>
+    </section>
+
+  </section>
+
+  <section class="summary-card">
+    <div class="summary-heading">
+      <span>✦ خلاصه انتخاب‌های تو</span>
+      <span class="summary-count" id="summaryCount">۰ انتخاب</span>
+    </div>
+    <div class="summary-content" id="summaryContent">
+      <span class="summary-empty">
+        با انتخاب گزینه‌ها، خلاصه بازی تو اینجا نمایش داده می‌شود.
+      </span>
+    </div>
+  </section>
+
+</main>
+
+<!-- TOAST STACK -->
+<div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
+
+<script>
+/* =====================================================
+   GAMECRAFT — Application Logic
+   Warm Claude-style theme + Dark/Light + Full buttons
+===================================================== */
+(function () {
+  "use strict";
+
+  const STORAGE_KEY = "gamecraft-v2";
+  const THEME_KEY = "gamecraft-theme";
+
+  /* ---------- STEP DEFINITIONS ---------- */
+  const STEPS = [
+    { kicker: "مرحله ۱ · شروع خلاقیت", title: "چه بازی‌ای در ذهن داری؟", subtitle: "یک نوع بازی انتخاب کن یا ایده خودت را توضیح بده." },
+    { kicker: "مرحله ۲ · هدف و قوانین", title: "بازیکن قرار است چه کاری انجام دهد؟", subtitle: "هدف بازی و قوانین اصلی آن را مشخص کن." },
+    { kicker: "مرحله ۳ · مکانیک‌های بازی", title: "چه قابلیت‌هایی در بازی باشد؟", subtitle: "هر تعداد قابلیت که لازم داری انتخاب کن." },
+    { kicker: "مرحله ۴ · ظاهر و تجربه", title: "بازی تو چه شکلی باشد؟", subtitle: "ظاهر، حس‌وحال، انیمیشن و کنترل‌ها را انتخاب کن." },
+    { kicker: "مرحله ۵ · فناوری", title: "بازی چطور ساخته شود؟", subtitle: "روش ساخت را مشخص کن یا انتخاب را به AI بسپار." },
+    { kicker: "مرحله ۶ · داده‌ها", title: "چه چیزهایی باید ذخیره شوند؟", subtitle: "امتیاز، پیشرفت و اطلاعات بازیکن را تنظیم کن." },
+    { kicker: "مرحله ۷ · کیفیت", title: "چه انتظاری از نتیجه داری؟", subtitle: "محدودیت‌ها و استانداردهای اجرای بازی را مشخص کن." },
+    { kicker: "مرحله ۸ · خروجی نهایی", title: "پرامپت بازی تو آماده است!", subtitle: "خلاصه را بررسی کن و پرامپت را برای AI کپی کن." }
+  ];
+
+  const STEP_LABELS = [
+    ["ایده بازی", "چه می‌سازیم؟"],
+    ["هدف و قوانین", "چطور بازی کنیم؟"],
+    ["مکانیک‌ها", "چه قابلیت‌هایی؟"],
+    ["ظاهر بازی", "چه شکلی باشد؟"],
+    ["فناوری", "چطور ساخته شود؟"],
+    ["داده‌ها", "امتیاز و ذخیره‌سازی"],
+    ["کیفیت", "تست و محدودیت‌ها"],
+    ["پرامپت نهایی", "آماده برای AI"]
+  ];
+
+  const PERSIAN_NUMBERS = ["۰","۱","۲","۳","۴","۵","۶","۷","۸","۹"];
+  function faNum(n) {
+    return String(n).replace(/\d/g, d => PERSIAN_NUMBERS[+d]);
+  }
+
+  /* ---------- STATE ---------- */
+  const state = {
+    currentStep: 0,
+    answers: {},
+    completedSteps: []
+  };
+
+  /* ---------- LABELS ---------- */
+  const LABELS = {
+    gameType: { puzzle:"معمایی", quiz:"آزمون و تست", story:"داستان تعاملی", racing:"مسابقه‌ای", strategy:"استراتژی", platformer:"سکوبازی", arcade:"آرکید و امتیازی", cards:"کارتی", words:"کلمات", creative:"خلاقیت و نقاشی", simulation:"شبیه‌سازی", custom:"ایده خودم" },
+    gameStructure: { levels:"مرحله‌ای", endless:"بی‌پایان", single:"یک دور کوتاه", story:"داستانی" },
+    endConditions: { win:"شرط برد", lose:"شرط باخت", timer:"پایان زمان", free:"بدون باخت" },
+    mechanics: { score:"امتیاز", timer:"تایمر", lives:"جان محدود", levels:"مراحل", choices:"انتخاب و پیامد", inventory:"کوله‌پشتی", random:"اتفاق تصادفی", puzzle:"معما", combo:"ترکیب حرکات", unlock:"قابلیت‌های قفل‌شده", save:"ذخیره پیشرفت", achievements:"دستاوردها", dragdrop:"کشیدن و رها کردن", matching:"جفت‌یابی", physics:"حرکت و برخورد", drawing:"طراحی آزاد" },
+    multiplayer: { solo:"تک‌نفره", local:"چندنفره روی یک دستگاه", online:"چندنفره آنلاین" },
+    visualStyle: { minimal:"مینیمال", cartoon:"کارتونی", pixel:"پیکسلی", handdrawn:"دست‌کشیده", neon:"نئونی", "3d":"سه‌بعدی‌نما", material:"Material 3" },
+    colorTheme: { light:"روشن", dark:"تاریک", colorful:"رنگارنگ", warm:"گرم و خاکی", custom:"رنگ دلخواه" },
+    gameMood: { relaxing:"آرامش‌بخش", funny:"بامزه", exciting:"هیجان‌انگیز", mysterious:"مرموز", competitive:"رقابتی", educational:"آموزشی" },
+    animationLevel: { none:"بدون انیمیشن", simple:"ساده و روان", rich:"پیشرفته" },
+    soundLevel: { none:"بدون صدا", sfx:"افکت صوتی", music:"موسیقی و افکت" },
+    uiElements: { menu:"منوی اصلی", hud:"نمایش وضعیت", progress:"نوار پیشرفت", instructions:"راهنما", endScreen:"صفحه پایان", settings:"تنظیمات" },
+    targetDevice: { mobile:"موبایل", desktop:"کامپیوتر", both:"هر دو" },
+    outputFormat: { single:"یک فایل HTML", multi:"پروژه چندفایلی", ai:"انتخاب توسط AI" },
+    technology: { vanilla:"HTML + CSS + JS", libraries:"کتابخانه‌های کمکی", ai:"انتخاب توسط AI" },
+    codeStructure: { simple:"ساده و مبتدی", modular:"ماژولار و قابل توسعه", ai:"متناسب با بازی" },
+    complexity: { poc:"نمونه اولیه", mvp:"نسخه قابل استفاده", advanced:"پیشرفته" },
+    dataFeatures: { score:"امتیاز و رکورد", progress:"پیشرفت مراحل", profile:"پروفایل بازیکن", questions:"بانک سؤال", items:"آیتم‌ها", leaderboard:"جدول رتبه‌بندی", report:"گزارش عملکرد", custom:"داده سفارشی" },
+    storage: { none:"بدون ذخیره‌سازی", local:"در مرورگر", cloud:"سرور یا فضای ابری", ai:"پیشنهاد AI" },
+    contentStructure: { inline:"داخل کد", data:"جدا از منطق بازی", ai:"انتخاب توسط AI" },
+    quality: { working:"همه دکمه‌ها کار کنند", restart:"شروع مجدد", responsive:"طراحی واکنش‌گرا", touch:"کنترل لمسی", keyboard:"پشتیبانی از کیبورد", feedback:"بازخورد فوری", validation:"مدیریت ورودی نامعتبر", testing:"آزمایش مسیرهای بازی", accessibility:"دسترس‌پذیری", reducedMotion:"کاهش حرکت", comments:"توضیحات در کد", minimal:"وابستگی حداقلی" },
+    codeComments: { beginner:"مناسب مبتدی", normal:"توضیحات ضروری", minimal:"حداقلی" },
+    delivery: { code:"کد بازی", instructions:"کد + راهنمای اجرا", full:"کد + تست + محدودیت‌ها" }
+  };
+
+  /* ---------- DOM HELPERS ---------- */
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+  function escapeHTML(v) {
+    return String(v ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+  }
+
+  function labelOf(group, value) {
+    if (Array.isArray(value)) return value.map(v => labelOf(group, v)).filter(Boolean).join("، ");
+    if (value == null || value === "") return "";
+    return (LABELS[group] && LABELS[group][value]) || String(value);
+  }
+
+  function choice(group, fallback = "") {
+    return labelOf(group, state.answers[group]) || fallback;
+  }
+
+  function text(key, fallback = "") {
+    const v = state.answers[key];
+    if (Array.isArray(v)) return v.join("، ");
+    const s = String(v ?? "").trim();
+    return s || fallback;
+  }
+
+  /* =====================================================
+     TOAST SYSTEM
+  ===================================================== */
+  function showToast(message, type = "info", duration = 3200) {
+    const stack = $("#toastStack");
+    if (!stack) { console.info(message); return; }
+
+    const icons = { success: "✓", error: "✕", info: "ℹ" };
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    toast.setAttribute("role", "status");
+    toast.innerHTML = `
+      <span class="toast-icon" aria-hidden="true">${icons[type] || "ℹ"}</span>
+      <span class="toast-message">${escapeHTML(message)}</span>
+      <button type="button" class="toast-close" aria-label="بستن">✕</button>
+    `;
+
+    stack.appendChild(toast);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => toast.classList.add("show"));
+    });
+
+    let removed = false;
+    function dismiss() {
+      if (removed) return;
+      removed = true;
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 260);
+    }
+
+    toast.querySelector(".toast-close").addEventListener("click", dismiss);
+    const timer = setTimeout(dismiss, duration);
+    toast.addEventListener("mouseenter", () => clearTimeout(timer), { once: true });
+  }
+
+  /* =====================================================
+     THEME MANAGEMENT
+  ===================================================== */
+  function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    const btn = $("#themeToggle");
+    if (btn) {
+      btn.textContent = theme === "dark" ? "☀️" : "🌙";
+      btn.setAttribute("aria-label", theme === "dark" ? "تغییر به تم روشن" : "تغییر به تم تاریک");
+    }
+    const meta = $('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", theme === "dark" ? "#1F1D1A" : "#F5F0E8");
+    try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+  }
+
+  function initTheme() {
+    let theme = "light";
+    try {
+      const saved = localStorage.getItem(THEME_KEY);
+      if (saved === "dark" || saved === "light") theme = saved;
+      else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) theme = "dark";
+    } catch (e) {}
+    applyTheme(theme);
+
+    $("#themeToggle")?.addEventListener("click", () => {
+      const current = document.documentElement.getAttribute("data-theme") || "light";
+      applyTheme(current === "dark" ? "light" : "dark");
+    });
+  }
+
+  /* =====================================================
+     STATE PERSISTENCE
+  ===================================================== */
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (!saved || typeof saved !== "object") return;
+      if (saved.answers && typeof saved.answers === "object" && !Array.isArray(saved.answers)) {
+        state.answers = { ...state.answers, ...saved.answers };
+      }
+      if (Number.isInteger(saved.currentStep) && saved.currentStep >= 0 && saved.currentStep < STEPS.length) {
+        state.currentStep = saved.currentStep;
+      }
+      if (Array.isArray(saved.completedSteps)) {
+        state.completedSteps = saved.completedSteps.filter(i => Number.isInteger(i) && i >= 0 && i < STEPS.length);
+      }
+    } catch (e) {}
+  }
+
+  function collect() {
+    const root = $("#wizardContent");
+    if (!root) return;
+    const groups = new Set($$("[data-group]", root).map(i => i.dataset.group));
+    groups.forEach(group => {
+      const inputs = $$(`[data-group="${group}"]`, root);
+      if (!inputs.length) return;
+      if (inputs[0].type === "checkbox") {
+        state.answers[group] = inputs.filter(i => i.checked).map(i => i.value);
+      } else {
+        const sel = inputs.find(i => i.checked);
+        if (sel) state.answers[group] = sel.value;
+        else delete state.answers[group];
+      }
+    });
+    $$("[data-field]", root).forEach(f => {
+      const key = f.dataset.field || f.id;
+      if (key) state.answers[key] = f.value;
+    });
+  }
+
+  function restore() {
+    const root = $("#wizardContent");
+    if (!root) return;
+    $$("[data-group]", root).forEach(input => {
+      const val = state.answers[input.dataset.group];
+      if (input.type === "checkbox") input.checked = Array.isArray(val) && val.includes(input.value);
+      else if (input.type === "radio") input.checked = val === input.value;
+    });
+    $$("[data-field]", root).forEach(f => {
+      const key = f.dataset.field || f.id;
+      if (key && state.answers[key] != null) f.value = state.answers[key];
+    });
+  }
+
+  /* =====================================================
+     RENDER HELPERS
+  ===================================================== */
+  function optCard(group, value, icon, title, desc = "", type = "checkbox") {
+    const id = "gc-" + group + "-" + String(value).replace(/[^a-zA-Z0-9_-]/g, "-");
+    return `
+      <div class="option-card">
+        <input type="${type}" id="${id}" name="${group}" value="${escapeHTML(value)}" data-group="${group}">
+        <label for="${id}">
+          <span class="option-icon">${icon}</span>
+          <span class="option-title">${escapeHTML(title)}</span>
+          ${desc ? `<span class="option-description">${escapeHTML(desc)}</span>` : ""}
+        </label>
+      </div>
+    `;
+  }
+
+  function pills(group, options, type = "radio") {
+    return `
+      <div class="choice-group">
+        ${options.map((item, i) => {
+          const id = "gc-pill-" + group + "-" + i;
+          return `
+            <div class="choice-pill">
+              <input type="${type}" id="${id}" name="${group}" value="${escapeHTML(item.value)}" data-group="${group}">
+              <label for="${id}">${item.icon || ""} ${escapeHTML(item.label)}</label>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  function field(id, label, placeholder, hint = "", type = "textarea") {
+    const hintHTML = hint ? `<p class="field-hint">${escapeHTML(hint)}</p>` : "";
+    if (type === "input") {
+      return `
+        <div class="field">
+          <label class="field-label" for="${escapeHTML(id)}">${escapeHTML(label)}</label>
+          ${hintHTML}
+          <input class="text-input" id="${escapeHTML(id)}" type="text" placeholder="${escapeHTML(placeholder)}" data-field="${escapeHTML(id)}">
+        </div>
+      `;
+    }
+    return `
+      <div class="field">
+        <label class="field-label" for="${escapeHTML(id)}">${escapeHTML(label)}</label>
+        ${hintHTML}
+        <textarea class="text-area" id="${escapeHTML(id)}" placeholder="${escapeHTML(placeholder)}" data-field="${escapeHTML(id)}"></textarea>
+      </div>
+    `;
+  }
+
+  function helpBox(title, content) {
+    return `
+      <details class="help-box">
+        <summary>💡 ${escapeHTML(title)}</summary>
+        <div class="help-content">${content}</div>
+      </details>
+    `;
+  }
+
+  /* =====================================================
+     STEP RENDERERS
+  ===================================================== */
+  function renderStep0() {
+    const types = [
+      ["puzzle","🧩","معمایی","حل مسئله و پیدا کردن پاسخ"],
+      ["quiz","🧠","آزمون و تست","سؤال، انتخاب و نتیجه"],
+      ["story","📖","داستان تعاملی","انتخاب مسیر داستان"],
+      ["racing","🏎️","مسابقه‌ای","سرعت، رقابت و رکورد"],
+      ["strategy","🏰","استراتژی","برنامه‌ریزی و تصمیم‌گیری"],
+      ["platformer","🦘","سکوبازی","پرش، حرکت و عبور از موانع"],
+      ["arcade","🎯","آرکید و امتیازی","بازی سریع و رکوردگیری"],
+      ["cards","🃏","کارتی","کارت، ترکیب و تاکتیک"],
+      ["words","🔤","کلمات","حدس کلمه و بازی زبانی"],
+      ["creative","🎨","خلاقیت و نقاشی","طراحی و ساخت آزاد"],
+      ["simulation","🏗️","شبیه‌سازی","مدیریت یک موقعیت واقعی"],
+      ["custom","✨","ایده خودم","نوع دیگری از بازی"]
+    ];
+
+    return `
+      <div class="field">
+        <span class="field-label">۱. چه نوع بازی‌ای می‌خواهی بسازی؟</span>
+        <p class="field-hint">یک گزینه را انتخاب کن. اگر ایده متفاوتی داری، «ایده خودم» را بزن.</p>
+        <div class="option-grid">
+          ${types.map(t => optCard("gameType", t[0], t[1], t[2], t[3], "radio")).join("")}
+        </div>
+      </div>
+      <div class="section-divider"></div>
+      ${field("gameIdea","۲. ایده بازی‌ات را توضیح بده","مثلاً: یک بازی که بازیکن باید با حل معما از یک قلعه فرار کند...","لازم نیست اصطلاح فنی بدانی؛ با زبان خودت توضیح بده.")}
+      ${field("gameName","۳. اسم بازی (اختیاری)","مثلاً: فرار از قلعه","","input")}
+      ${helpBox("مکانیک بازی یعنی چه؟",`
+        <p><strong>مکانیک</strong> یعنی کاری که بازیکن در بازی انجام می‌دهد. برای مثال، پریدن، حل معما، انتخاب جواب یا جمع‌آوری سکه.</p>
+        <p><strong>نمونه:</strong> «بازیکن باید ۵ کلید پیدا کند تا در خروجی باز شود.»</p>
+      `)}
+    `;
+  }
+
+  function renderStep1() {
+    return `
+      ${field("playerGoal","۱. هدف اصلی بازیکن چیست؟","مثلاً: پیدا کردن گنج قبل از تمام شدن زمان...")}
+      <div class="field">
+        <span class="field-label">۲. ساختار بازی چگونه باشد؟</span>
+        ${pills("gameStructure",[
+          {value:"levels",icon:"🪜",label:"مرحله‌ای"},
+          {value:"endless",icon:"♾️",label:"بی‌پایان"},
+          {value:"single",icon:"🎯",label:"یک دور کوتاه"},
+          {value:"story",icon:"📖",label:"داستانی"}
+        ])}
+      </div>
+      <div class="section-divider"></div>
+      <div class="field">
+        <span class="field-label">۳. شرایط پایان بازی</span>
+        <p class="field-hint">می‌توانی چند مورد را انتخاب کنی.</p>
+        <div class="option-grid">
+          ${optCard("endConditions","win","🏆","شرط برد","مثلاً رسیدن به هدف")}
+          ${optCard("endConditions","lose","💥","شرط باخت","مثلاً تمام شدن جان‌ها")}
+          ${optCard("endConditions","timer","⏱️","پایان زمان","تمام شدن تایمر")}
+          ${optCard("endConditions","free","🕊️","بدون باخت","آزادی برای تجربه کردن")}
+        </div>
+      </div>
+      ${field("gameRules","۴. قوانین ویژه (اختیاری)","مثلاً: بازیکن فقط سه فرصت دارد و هر پاسخ درست یک امتیاز می‌دهد...")}
+      ${helpBox("چطور قوانین خوب بنویسیم؟",`
+        <p>قوانین باید مشخص کنند بازیکن چه کاری می‌تواند انجام دهد.</p>
+        <p><strong>مثال:</strong> هر پاسخ درست ۱۰ امتیاز دارد؛ سه پاسخ اشتباه باعث پایان بازی می‌شود.</p>
+        <p>اگر نمی‌دانی چه قوانینی مناسب‌اند، این بخش را خالی بگذار. پرامپت نهایی از AI می‌خواهد قوانین ساده و سازگار با ایده پیشنهاد کند.</p>
+      `)}
+    `;
+  }
+
+  function renderStep2() {
+    const mechanics = [
+      ["score","🏆","امتیاز","افزایش امتیاز بازیکن"],
+      ["timer","⏱️","تایمر","محدودیت زمانی"],
+      ["lives","❤️","جان محدود","تعداد فرصت‌های بازیکن"],
+      ["levels","🪜","مراحل","پیشروی در بازی"],
+      ["choices","🔀","انتخاب و پیامد","تصمیم‌ها نتیجه دارند"],
+      ["inventory","🎒","کوله‌پشتی","نگهداری آیتم‌ها"],
+      ["random","🎲","اتفاق تصادفی","نتایج غیرقابل‌پیش‌بینی"],
+      ["puzzle","🧩","معما","حل مسئله برای پیشروی"],
+      ["combo","⚡","ترکیب حرکات","پاداش برای زنجیره حرکت‌ها"],
+      ["unlock","🔓","قابلیت‌های قفل‌شده","باز شدن محتوا"],
+      ["save","💾","ذخیره پیشرفت","ادامه از آخرین وضعیت"],
+      ["achievements","🏅","دستاوردها","پاداش برای رسیدن به هدف"],
+      ["dragdrop","✋","کشیدن و رها کردن","جابجایی با لمس یا ماوس"],
+      ["matching","🃏","جفت‌یابی","پیدا کردن موارد مرتبط"],
+      ["physics","⚙️","حرکت و برخورد","جاذبه و برخورد ساده"],
+      ["drawing","✏️","طراحی آزاد","کشیدن شکل با ماوس یا لمس"]
+    ];
+
+    return `
+      <div class="field">
+        <span class="field-label">قابلیت‌های موردنظر را انتخاب کن</span>
+        <p class="field-hint">انتخاب چند گزینه مجاز است. فقط مواردی را انتخاب کن که واقعاً به بازی کمک می‌کنند.</p>
+        <div class="option-grid">
+          ${mechanics.map(m => optCard("mechanics",m[0],m[1],m[2],m[3])).join("")}
+        </div>
+      </div>
+      <div class="section-divider"></div>
+      <div class="field">
+        <span class="field-label">بازی چندنفره باشد؟</span>
+        ${pills("multiplayer",[
+          {value:"solo",icon:"👤",label:"تک‌نفره"},
+          {value:"local",icon:"👥",label:"چندنفره روی یک دستگاه"},
+          {value:"online",icon:"🌐",label:"چندنفره آنلاین"}
+        ])}
+        <p class="field-hint">بازی آنلاین معمولاً به سرور نیاز دارد و از نسخه تک‌فایلی پیچیده‌تر است.</p>
+      </div>
+      ${field("customMechanics","قابلیت دیگری در نظر داری؟ (اختیاری)","مثلاً: امکان تغییر ظاهر شخصیت یا ساخت مرحله توسط بازیکن...")}
+      ${helpBox("آیا باید همه قابلیت‌ها را انتخاب کنم؟",`
+        <p>نه! برای اولین نمونه، یک یا دو مکانیک اصلی کافی است. قابلیت‌های زیاد ممکن است ساخت بازی را دشوار و پرخطا کند.</p>
+        <p><strong>مثال:</strong> برای بازی حدس کلمه، انتخاب‌های مناسب می‌توانند امتیاز، تایمر و شروع مجدد باشند.</p>
+      `)}
+    `;
+  }
+
+  function renderStep3() {
+    return `
+      <div class="field">
+        <span class="field-label">۱. سبک بصری</span>
+        ${pills("visualStyle",[
+          {value:"minimal",icon:"◻️",label:"مینیمال"},
+          {value:"cartoon",icon:"🎨",label:"کارتونی"},
+          {value:"pixel",icon:"👾",label:"پیکسلی"},
+          {value:"handdrawn",icon:"✏️",label:"دست‌کشیده"},
+          {value:"neon",icon:"💜",label:"نئونی"},
+          {value:"3d",icon:"🧊",label:"سه‌بعدی‌نما"},
+          {value:"material",icon:"📱",label:"Material 3"}
+        ])}
+      </div>
+      <div class="field">
+        <span class="field-label">۲. تم رنگی</span>
+        ${pills("colorTheme",[
+          {value:"light",icon:"☀️",label:"روشن"},
+          {value:"dark",icon:"🌙",label:"تاریک"},
+          {value:"colorful",icon:"🌈",label:"رنگارنگ"},
+          {value:"warm",icon:"🧡",label:"گرم و خاکی"},
+          {value:"custom",icon:"🎨",label:"رنگ دلخواه"}
+        ])}
+        <div class="conditional-field hidden" id="customColorField">
+          <label class="field-label" for="customColors">رنگ‌های دلخواه</label>
+          <input class="text-input" id="customColors" data-field="customColors" placeholder="مثلاً کرم، نارنجی و قهوه‌ای">
+        </div>
+      </div>
+      <div class="field">
+        <span class="field-label">۳. حس‌وحال بازی</span>
+        ${pills("gameMood",[
+          {value:"relaxing",icon:"🌿",label:"آرامش‌بخش"},
+          {value:"funny",icon:"😂",label:"بامزه"},
+          {value:"exciting",icon:"🔥",label:"هیجان‌انگیز"},
+          {value:"mysterious",icon:"🔍",label:"مرموز"},
+          {value:"competitive",icon:"🏁",label:"رقابتی"},
+          {value:"educational",icon:"📚",label:"آموزشی"}
+        ])}
+      </div>
+      <div class="section-divider"></div>
+      <div class="field">
+        <span class="field-label">۴. انیمیشن‌ها</span>
+        ${pills("animationLevel",[
+          {value:"none",label:"بدون انیمیشن"},
+          {value:"simple",label:"ساده و روان"},
+          {value:"rich",label:"پیشرفته"}
+        ])}
+      </div>
+      <div class="field">
+        <span class="field-label">۵. صدا</span>
+        ${pills("soundLevel",[
+          {value:"none",label:"بدون صدا"},
+          {value:"sfx",label:"افکت صوتی"},
+          {value:"music",label:"موسیقی و افکت"}
+        ])}
+      </div>
+      <div class="field">
+        <span class="field-label">۶. اجزای رابط کاربری</span>
+        <div class="option-grid">
+          ${optCard("uiElements","menu","📋","منوی اصلی","شروع و تنظیمات")}
+          ${optCard("uiElements","hud","📊","نمایش وضعیت","امتیاز، جان و تایمر")}
+          ${optCard("uiElements","progress","📈","نوار پیشرفت","نمایش میزان پیشروی")}
+          ${optCard("uiElements","instructions","💡","راهنما","آموزش نحوه بازی")}
+          ${optCard("uiElements","endScreen","🏁","صفحه پایان","نتیجه و شروع مجدد")}
+          ${optCard("uiElements","settings","⚙️","تنظیمات","کنترل صدا و ظاهر")}
+        </div>
+      </div>
+      <div class="field">
+        <span class="field-label">۷. دستگاه هدف</span>
+        ${pills("targetDevice",[
+          {value:"mobile",icon:"📱",label:"موبایل"},
+          {value:"desktop",icon:"💻",label:"کامپیوتر"},
+          {value:"both",icon:"📱💻",label:"هر دو"}
+        ])}
+      </div>
+      ${field("visualNotes","توضیحات ظاهری دلخواه (اختیاری)","مثلاً: کارت‌های گرد، پس‌زمینه کرم، دکمه‌های بزرگ و انیمیشن نرم...")}
+      ${helpBox("UX و طراحی واکنش‌گرا یعنی چه؟",`
+        <p><strong>UX</strong> یعنی تجربه کاربر؛ بازی باید قابل‌فهم، راحت و لذت‌بخش باشد.</p>
+        <p><strong>طراحی واکنش‌گرا</strong> یعنی ظاهر بازی متناسب با اندازه صفحه موبایل یا کامپیوتر تغییر کند.</p>
+        <p><strong>Microinteraction</strong> یعنی واکنش کوچک رابط کاربری؛ مثلاً دکمه هنگام کلیک تغییر کند یا پاسخ درست با انیمیشن نمایش داده شود.</p>
+      `)}
+    `;
+  }
+
+  function renderStep4() {
+    return `
+      <div class="field">
+        <span class="field-label">۱. خروجی بازی</span>
+        <p class="field-hint">برای شروع، پیشنهاد می‌کنیم گزینه اول را انتخاب کنی.</p>
+        ${pills("outputFormat",[
+          {value:"single",icon:"📄",label:"یک فایل HTML"},
+          {value:"multi",icon:"📁",label:"پروژه چندفایلی"},
+          {value:"ai",icon:"🤖",label:"انتخاب توسط AI"}
+        ])}
+        <div class="tech-note"><strong>فایل HTML مستقل:</strong> کد، ظاهر و منطق بازی در یک فایل قرار می‌گیرند. برای بازی‌های ساده و نمونه‌های اولیه انتخاب مناسبی است.</div>
+      </div>
+      <div class="field">
+        <span class="field-label">۲. فناوری ساخت</span>
+        ${pills("technology",[
+          {value:"vanilla",icon:"🌐",label:"HTML + CSS + JS"},
+          {value:"libraries",icon:"🧰",label:"کتابخانه‌های کمکی"},
+          {value:"ai",icon:"🤖",label:"انتخاب توسط AI"}
+        ])}
+      </div>
+      <div class="field">
+        <span class="field-label">۳. ساختار کد</span>
+        ${pills("codeStructure",[
+          {value:"simple",icon:"🧒",label:"ساده و مبتدی"},
+          {value:"modular",icon:"🧩",label:"ماژولار و قابل توسعه"},
+          {value:"ai",icon:"🤖",label:"متناسب با بازی"}
+        ])}
+      </div>
+      <div class="field">
+        <span class="field-label">۴. سطح پیچیدگی پروژه</span>
+        <div class="complexity-grid">
+          ${[
+            {value:"poc",title:"نمونه اولیه",desc:"کوچک، سریع و مناسب آزمایش ایده"},
+            {value:"mvp",title:"نسخه قابل استفاده",desc:"بازی کامل با امکانات ضروری"},
+            {value:"advanced",title:"پیشرفته",desc:"امکانات بیشتر در صورت نیاز واقعی"}
+          ].map((item, i) => {
+            const id = "gc-complexity-" + i;
+            return `
+              <div class="complexity-card">
+                <input type="radio" name="complexity" id="${id}" value="${item.value}" data-group="complexity">
+                <label for="${id}"><strong>${item.title}</strong><span>${item.desc}</span></label>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+      <div class="field">
+        <span class="field-label">۵. کتابخانه یا ابزار خاص (اختیاری)</span>
+        <input class="text-input" id="preferredLibrary" data-field="preferredLibrary" placeholder="مثلاً GSAP برای انیمیشن یا Chart.js برای نمودار">
+        <p class="field-hint">اگر ابزار خاصی مدنظر نداری، خالی بگذار.</p>
+      </div>
+      ${helpBox("کتابخانه، POC و MVP چه معنایی دارند؟",`
+        <p><strong>کتابخانه:</strong> کد آماده‌ای که قابلیت خاصی را ساده‌تر می‌کند.</p>
+        <p><strong>POC:</strong> نمونه کوچک برای بررسی اینکه ایده شدنی است یا نه.</p>
+        <p><strong>MVP:</strong> کوچک‌ترین نسخه‌ای که قابلیت‌های اصلی و قابل استفاده بازی را دارد.</p>
+        <p>برای شروع معمولاً POC بهترین انتخاب است؛ اول بازی را قابل اجرا کن، بعد قابلیت اضافه کن.</p>
+      `)}
+    `;
+  }
+
+  function renderStep5() {
+    return `
+      <div class="field">
+        <span class="field-label">۱. چه اطلاعاتی در بازی نیاز داری؟</span>
+        <p class="field-hint">فقط موارد موردنیاز را انتخاب کن.</p>
+        <div class="option-grid">
+          ${optCard("dataFeatures","score","🏆","امتیاز و رکورد","ثبت بهترین نتیجه")}
+          ${optCard("dataFeatures","progress","📈","پیشرفت مراحل","ذخیره مرحله فعلی")}
+          ${optCard("dataFeatures","profile","👤","پروفایل بازیکن","مثلاً نام و آواتار")}
+          ${optCard("dataFeatures","questions","❓","بانک سؤال","محتوای قابل تغییر")}
+          ${optCard("dataFeatures","items","🎒","آیتم‌ها","اشیا و وسایل بازی")}
+          ${optCard("dataFeatures","leaderboard","🥇","جدول رتبه‌بندی","مقایسه نتایج بازیکنان")}
+          ${optCard("dataFeatures","report","📊","گزارش عملکرد","خلاصه نتیجه بازی")}
+          ${optCard("dataFeatures","custom","🗂️","داده سفارشی","اطلاعات مخصوص بازی")}
+        </div>
+      </div>
+      <div class="section-divider"></div>
+      <div class="field">
+        <span class="field-label">۲. اطلاعات کجا ذخیره شوند؟</span>
+        ${pills("storage",[
+          {value:"none",icon:"🚫",label:"بدون ذخیره‌سازی"},
+          {value:"local",icon:"💾",label:"در مرورگر"},
+          {value:"cloud",icon:"☁️",label:"سرور یا فضای ابری"},
+          {value:"ai",icon:"🤖",label:"پیشنهاد AI"}
+        ])}
+        <div class="conditional-field hidden" id="cloudStorageField">
+          <p class="field-hint">ذخیره‌سازی ابری معمولاً به سرور، تنظیمات امنیتی و گاهی حساب کاربری نیاز دارد. این بخش برای نسخه تک‌فایلی ساده مناسب نیست.</p>
+          <label class="field-label" for="cloudNotes">توضیحات ذخیره‌سازی ابری</label>
+          <textarea class="text-area" id="cloudNotes" data-field="cloudNotes" placeholder="مثلاً: کاربران با حساب کاربری وارد شوند و پیشرفتشان روی سرور ذخیره شود..."></textarea>
+        </div>
+      </div>
+      <div class="field">
+        <span class="field-label">۳. محتوای بازی چگونه تعریف شود؟</span>
+        ${pills("contentStructure",[
+          {value:"inline",label:"داخل کد"},
+          {value:"data",label:"جدا از منطق بازی"},
+          {value:"ai",label:"انتخاب توسط AI"}
+        ])}
+        <p class="field-hint">جدا کردن محتوا کمک می‌کند سؤال‌ها، مراحل و آیتم‌ها را راحت‌تر تغییر بدهی.</p>
+      </div>
+      ${field("dataNotes","توضیحات بیشتر درباره داده‌ها (اختیاری)","مثلاً: پاسخ‌های آزمون در یک آرایه باشند تا بعداً بتوانم سؤال‌ها را تغییر بدهم...")}
+      ${helpBox("Local Storage و JSON یعنی چه؟",`
+        <p><strong>Local Storage:</strong> فضایی در مرورگر برای نگهداری اطلاعات ساده؛ اطلاعات به‌طور خودکار بین دستگاه‌های مختلف همگام نمی‌شوند.</p>
+        <p><strong>JSON:</strong> روشی متنی برای نگهداری داده‌ها به‌صورت ساختاریافته؛ مثلاً فهرست سؤال‌ها و پاسخ‌ها.</p>
+        <p><strong>نکته:</strong> Local Storage برای رمز عبور یا اطلاعات حساس مناسب نیست.</p>
+      `)}
+    `;
+  }
+
+  function renderStep6() {
+    const quality = [
+      ["working","✅","همه دکمه‌ها کار کنند","بدون کنترل‌های نمایشی و بی‌عملکرد"],
+      ["restart","🔄","شروع مجدد","شروع بازی از ابتدا"],
+      ["responsive","📱","طراحی واکنش‌گرا","مناسب موبایل و دسکتاپ"],
+      ["touch","👆","کنترل لمسی","مناسب صفحه‌های لمسی"],
+      ["keyboard","⌨️","پشتیبانی از کیبورد","در صورت تناسب با بازی"],
+      ["feedback","💬","بازخورد فوری","نمایش نتیجه انتخاب‌ها"],
+      ["validation","🛡️","مدیریت ورودی نامعتبر","جلوگیری از خطاهای رایج"],
+      ["testing","🧪","آزمایش مسیرهای بازی","بررسی شروع تا پایان"],
+      ["accessibility","♿","دسترس‌پذیری","خوانایی و کنترل قابل فهم"],
+      ["reducedMotion","🌿","کاهش حرکت","احترام به تنظیم کاهش انیمیشن"],
+      ["comments","📝","توضیحات در کد","قابل فهم برای مبتدی"],
+      ["minimal","🧹","وابستگی حداقلی","پرهیز از ابزارهای غیرضروری"]
+    ];
+
+    return `
+      <div class="field">
+        <span class="field-label">۱. الزامات کیفیت</span>
+        <p class="field-hint">پیشنهاد می‌شود این گزینه‌ها را فعال نگه داری.</p>
+        <div class="option-grid">
+          ${quality.map(q => optCard("quality",q[0],q[1],q[2],q[3])).join("")}
+        </div>
+      </div>
+      <div class="section-divider"></div>
+      <div class="field">
+        <span class="field-label">۲. سطح توضیحات کد</span>
+        ${pills("codeComments",[
+          {value:"beginner",icon:"🧒",label:"مناسب مبتدی"},
+          {value:"normal",icon:"📝",label:"توضیحات ضروری"},
+          {value:"minimal",icon:"⚡",label:"حداقلی"}
+        ])}
+      </div>
+      <div class="field">
+        <span class="field-label">۳. خروجی موردانتظار از AI</span>
+        ${pills("delivery",[
+          {value:"code",label:"کد بازی"},
+          {value:"instructions",label:"کد + راهنمای اجرا"},
+          {value:"full",label:"کد + تست + محدودیت‌ها"}
+        ])}
+      </div>
+      <div class="field">
+        <span class="field-label">۴. محدودیت‌های اضافی (اختیاری)</span>
+        <textarea class="text-area" id="constraints" data-field="constraints" placeholder="مثلاً: بدون اینترنت، بدون نصب نرم‌افزار، بدون API پولی و بدون حساب کاربری..."></textarea>
+      </div>
+      ${helpBox("چرا تست بازی مهم است؟",`
+        <p>ممکن است بازی در ظاهر درست باشد اما دکمه‌ها کار نکنند، امتیاز اشتباه محاسبه شود یا شروع مجدد وضعیت قبلی را پاک نکند.</p>
+        <p>از AI بخواه مسیرهای اصلی بازی را آزمایش کند و مشکلات را پیش از تحویل برطرف سازد.</p>
+        <p>البته درخواست تست به‌تنهایی تضمین نمی‌کند که تمام خطاها پیدا شوند؛ بازی را در مرورگر نیز امتحان کن.</p>
+      `)}
+    `;
+  }
+
+  function renderStep7() {
+    return `
+      <div class="review-warning">
+        <span>✦</span>
+        <span>این پرامپت از انتخاب‌های تو ساخته می‌شود. قبل از کپی کردن، آن را بررسی کن. می‌توانی به مراحل قبلی برگردی و تغییرات ایجاد کنی.</span>
+      </div>
+      <div class="review-list" id="finalReview"></div>
+      <div class="prompt-toolbar">
+        <div class="prompt-toolbar-title">پرامپت آماده برای هوش مصنوعی</div>
+        <div class="prompt-actions">
+          <button type="button" class="btn btn-small" id="refreshPromptBtn">↻ به‌روزرسانی</button>
+        </div>
+      </div>
+      <pre class="prompt-preview" id="promptPreview" tabindex="0">پرامپت پس از تکمیل مراحل ساخته می‌شود.</pre>
+
+      <div class="prompt-actions" style="margin-top:16px">
+        <button type="button" class="btn btn-primary" id="copyPromptBtn">📋 Copy for AI</button>
+        <button type="button" class="btn btn-tonal" id="downloadPromptBtn">⬇ دریافت فایل متنی</button>
+      </div>
+
+      <!-- راهنمای جمع‌شونده استفاده از پرامپت -->
+      <details class="prompt-guide">
+        <summary>📘 راهنمای استفاده از پرامپت</summary>
+        <div class="prompt-guide-content">
+          <ol>
+            <li>
+              <strong>پرامپت را کپی کن:</strong>
+              روی دکمه «Copy for AI» بزن. اگر کپی خودکار کار نکرد، متن پیش‌نمایش بالا را دستی انتخاب و کپی کن.
+            </li>
+            <li>
+              <strong>ابزار مناسب را انتخاب کن:</strong>
+              از یک ابزار هوش مصنوعی کدنویس مثل ChatGPT، Claude، Gemini، Cursor یا Copilot Chat استفاده کن.
+            </li>
+            <li>
+              <strong>درخواست ساخت پروژه بده:</strong>
+              پرامپت را در کادر چت پیست کن و بنویس: «این بازی را دقیقاً طبق مشخصات بساز و کد کامل را بده.»
+            </li>
+            <li>
+              <strong>مرحله‌به‌مرحله پیش برو:</strong>
+              اگر بازی بزرگ است، از AI بخواه ابتدا نسخه POC را بسازد، سپس در پیام‌های بعدی قابلیت اضافه کند.
+            </li>
+            <li>
+              <strong>نتیجه را اجرا و تست کن:</strong>
+              فایل HTML را در مرورگر باز کن و دکمه‌ها، امتیاز، شروع مجدد و مسیرهای اصلی بازی را آزمایش کن.
+            </li>
+            <li>
+              <strong>خطاها را گزارش بده:</strong>
+              اگر چیزی کار نکرد، متن خطا و رفتاری که دیده‌ای را به AI بگو و درخواست اصلاح کن.
+            </li>
+          </ol>
+          <div class="guide-tip">
+            💡 <strong>نکته:</strong> پرامپت را تا زمانی که با خروجی نهایی راضی نشده‌ای نگه دار. می‌توانی از دکمه «دریافت فایل متنی» برای ذخیره نسخه پشتیبان استفاده کنی.
+          </div>
+        </div>
+      </details>
+
+      <div class="tech-note" style="margin-top:16px">
+        <strong>روش استفاده:</strong> پرامپت را در ابزار کدنویسی هوش مصنوعی خود قرار بده. اگر ابزار از ساخت پروژه پشتیبانی می‌کند، از آن بخواه ابتدا نسخه کوچک و قابل‌بازی را بسازد و سپس امکانات اضافی را مرحله‌به‌مرحله اضافه کند.
+      </div>
+    `;
+  }
+
+  const RENDERERS = [renderStep0, renderStep1, renderStep2, renderStep3, renderStep4, renderStep5, renderStep6, renderStep7];
+
+  /* =====================================================
+     PROMPT GENERATION
+  ===================================================== */
+  function generatePrompt() {
+    const mechanics = choice("mechanics");
+    const dataFeatures = choice("dataFeatures");
+    const quality = choice("quality");
+    const uiElements = choice("uiElements");
+
+    const idea = text("gameIdea", "ایده دقیق هنوز مشخص نشده است.");
+    const gameName = text("gameName", "بازی جدید");
+    const gameType = choice("gameType", "متناسب با ایده انتخاب شود");
+    const goal = text("playerGoal") || "متناسب با ایده انتخاب شود";
+    const structure = choice("gameStructure", "متناسب با ایده انتخاب شود");
+    const endCondition = choice("endConditions", "قوانین مناسب طراحی شود");
+    const multiplayer = choice("multiplayer", "تک‌نفره");
+    const visualStyle = choice("visualStyle", "ساده و تمیز");
+    const colorTheme = choice("colorTheme", "هماهنگ با موضوع بازی");
+    const mood = choice("gameMood");
+    const animation = choice("animationLevel");
+    const sound = choice("soundLevel");
+    const device = choice("targetDevice", "موبایل و کامپیوتر");
+    const output = choice("outputFormat", "یک فایل HTML");
+    const technology = choice("technology", "HTML، CSS و JavaScript ساده");
+    const structureCode = choice("codeStructure", "ساده و قابل فهم برای مبتدی");
+    const complexity = choice("complexity", "نمونه اولیه");
+    const library = text("preferredLibrary");
+    const storage = choice("storage", "بدون ذخیره‌سازی");
+    const contentStructure = choice("contentStructure", "جدا کردن محتوا از منطق بازی");
+    const comments = choice("codeComments", "توضیحات مناسب مبتدی");
+    const delivery = choice("delivery", "کد + راهنمای اجرا");
+
+    const parts = [];
+    parts.push(
+      "# پرامپت ساخت بازی وب", "",
+      "نقش تو: طراح بازی، طراح تجربه کاربری و توسعه‌دهنده وب هستی. یک بازی واقعاً قابل اجرا و منسجم بساز، نه صرفاً یک طرح ظاهری.", "",
+      "## ۱. ایده و هدف",
+      `- نام بازی: ${gameName}`,
+      `- نوع بازی: ${gameType}`,
+      `- ایده: ${idea}`,
+      `- هدف بازیکن: ${goal}`,
+      `- ساختار بازی: ${structure}`,
+      `- شرایط پایان: ${endCondition}`, "",
+      "## ۲. قوانین و مکانیک‌ها",
+      text("gameRules", "قوانین را بر اساس ایده طراحی کن و پیش از پیاده‌سازی مطمئن شو با یکدیگر تناقض ندارند."),
+      `- مکانیک‌ها: ${mechanics || "مکانیک‌های ضروری و متناسب با ایده"}`,
+      `- حالت بازی: ${multiplayer}`,
+      `- مکانیک اختصاصی: ${text("customMechanics", "مورد خاصی تعیین نشده است.")}`, "",
+      "## ۳. طراحی بصری و تجربه کاربری",
+      `- سبک: ${visualStyle}`,
+      `- رنگ‌بندی: ${colorTheme}`,
+      `- حس‌وحال: ${mood || "متناسب با موضوع بازی"}`,
+      `- انیمیشن: ${animation || "در حد نیاز"}`,
+      `- صدا: ${sound || "در صورت نیاز"}`,
+      `- دستگاه هدف: ${device}`,
+      `- اجزای رابط کاربری: ${uiElements || "اجزای ضروری و کاربردی"}`,
+      `- رنگ‌های سفارشی: ${text("customColors", "تعیین نشده")}`,
+      `- نکات طراحی: ${text("visualNotes", "رابطی خوانا، هماهنگ، خلوت و متناسب با موضوع بازی طراحی کن.")}`, "",
+      "الزامات تجربه کاربری:",
+      "- بازیکن باید بداند چه کاری انجام دهد و نتیجه هر اقدام را ببیند.",
+      "- وضعیت بازی، امتیاز، پیشرفت و نتیجه را در صورت نیاز نمایش بده.",
+      "- کنترل‌ها باید واضح و قابل استفاده باشند.",
+      "- از قابلیت‌ها و افکت‌های غیرضروری پرهیز کن.", "",
+      "## ۴. فناوری و ساختار",
+      `- قالب خروجی: ${output}`,
+      `- فناوری: ${technology}`,
+      `- ساختار کد: ${structureCode}`,
+      `- پیچیدگی: ${complexity}`,
+      `- کتابخانه پیشنهادی: ${library || "در صورت نیاز"}`,
+      `- توضیحات کد: ${comments}`
+    );
+
+    if (output === "یک فایل HTML") {
+      parts.push(
+        "- HTML، CSS و JavaScript را در یک فایل HTML قرار بده.",
+        "- تا حد امکان از وابستگی خارجی، نصب و راه‌اندازی پیچیده پرهیز کن.",
+        "- اگر کتابخانه خارجی لازم است، وابستگی به اینترنت را مشخص کن."
+      );
+    } else if (output === "پروژه چندفایلی") {
+      parts.push(
+        "- فایل‌ها را با نام و مسئولیت مشخص ارائه کن.",
+        "- ساختار پوشه‌ها و دستورالعمل اجرای پروژه را توضیح بده.",
+        "- تمام فایل‌های لازم را کامل ارائه کن."
+      );
+    }
+
+    parts.push(
+      "", "## ۵. داده و ذخیره‌سازی",
+      `- روش ذخیره‌سازی: ${storage}`,
+      `- ساختار محتوا: ${contentStructure}`,
+      `- اطلاعات موردنیاز: ${dataFeatures || "فقط اطلاعات ضروری"}`,
+      `- توضیحات داده‌ها: ${text("dataNotes", "ساختار داده را متناسب با نیاز بازی طراحی کن.")}`
+    );
+
+    if (storage === "در مرورگر") {
+      parts.push(
+        "- برای ذخیره محلی از localStorage یا راهکار ساده مناسب استفاده کن.",
+        "- ذخیره، بارگذاری مجدد و نبود داده قبلی را آزمایش کن."
+      );
+    }
+
+    if (storage === "سرور یا فضای ابری") {
+      parts.push(
+        "- ذخیره‌سازی آنلاین به سرویس سمت سرور یا API نیاز دارد و با HTML مستقل به‌تنهایی فراهم نمی‌شود.",
+        `- جزئیات موردنیاز: ${text("cloudNotes", "سرویس و معماری مناسب را پیشنهاد بده.")}`,
+        "- هیچ کلید محرمانه‌ای را در کد سمت کاربر قرار نده.",
+        "- اگر زیرساخت آماده نیست، محدودیت را اعلام کن و نسخه اولیه قابل اجرا بساز."
+      );
+    }
+
+    if (multiplayer === "چندنفره آنلاین") {
+      parts.push(
+        "- بازی آنلاین چندنفره به ارتباط شبکه‌ای و معمولاً سرویس سمت سرور نیاز دارد.",
+        "- آنلاین بودن را صرفاً به‌صورت ظاهری شبیه‌سازی نکن؛ زیرساخت موردنیاز را توضیح بده."
+      );
+    }
+
+    parts.push(
+      "", "## ۶. کیفیت و آزمایش",
+      `موارد مورد تأکید: ${quality || "عملکرد صحیح، واکنش‌گرایی و امکان شروع مجدد"}`, "",
+      "پیش از تحویل:",
+      "۱. تمام دکمه‌ها و تعاملات را بررسی کن.",
+      "۲. مسیر بازی را از شروع تا پایان آزمایش کن.",
+      "۳. شرایط برد، باخت، امتیازدهی و شروع مجدد را بررسی کن.",
+      "۴. نمایش و کنترل‌ها را روی موبایل و کامپیوتر بررسی کن.",
+      "۵. خطاهای JavaScript و مشکلات رابط کاربری را رفع کن.",
+      "۶. قابلیت‌هایی را که پیاده‌سازی نشده‌اند، آماده و کامل معرفی نکن.", "",
+      "## ۷. محدودیت‌ها",
+      text("constraints", "پیاده‌سازی را ساده نگه دار و از قابلیت‌های غیرضروری پرهیز کن."), "",
+      "## ۸. روش تحویل",
+      `- خروجی مورد انتظار: ${delivery}`,
+      "- اگر جزئیات کوچکی نامشخص است، فرضی منطقی و ساده انتخاب کن و آن را اعلام کن.",
+      "- ابتدا یک نسخه کوچک، کامل و قابل اجرا بساز.",
+      "- راهنمای اجرا و کنترل‌های بازی را توضیح بده.",
+      "- اگر امکان آزمایش واقعی نداری، صادقانه اعلام کن چه مواردی آزمایش نشده‌اند.", "",
+      "معیار موفقیت: بازی قابل اجرا، قابل فهم و متناسب با ایده کاربر؛ نه صرفاً یک رابط زیبا."
+    );
+
+    return parts.join("\n");
+  }
+
+  /* =====================================================
+     UI UPDATES
+  ===================================================== */
+  function updateConditionalFields() {
+    const customColors = $("#customColorField");
+    const cloudStorage = $("#cloudStorageField");
+    if (customColors) customColors.classList.toggle("hidden", state.answers.colorTheme !== "custom");
+    if (cloudStorage) cloudStorage.classList.toggle("hidden", state.answers.storage !== "cloud");
+  }
+
+  function updateSummary() {
+    const container = $("#summaryContent");
+    const count = $("#summaryCount");
+    if (!container) return;
+
+    const rows = [
+      ["نوع بازی", choice("gameType")],
+      ["ایده", text("gameIdea")],
+      ["هدف", text("playerGoal")],
+      ["مکانیک‌ها", choice("mechanics")],
+      ["سبک بصری", choice("visualStyle")],
+      ["خروجی", choice("outputFormat")],
+      ["ذخیره‌سازی", choice("storage")]
+    ].filter(r => r[1]);
+
+    const total = Object.values(state.answers).filter(v =>
+      Array.isArray(v) ? v.length > 0 : String(v ?? "").trim() !== ""
+    ).length;
+
+    if (count) count.textContent = faNum(total) + " انتخاب";
+
+    if (!rows.length) {
+      container.innerHTML = `<span class="summary-empty">با انتخاب گزینه‌ها، خلاصه بازی تو اینجا نمایش داده می‌شود.</span>`;
+      return;
+    }
+
+    container.innerHTML = rows.map(([title, value]) =>
+      `<span class="summary-chip"><strong>${escapeHTML(title)}:</strong> ${escapeHTML(value)}</span>`
+    ).join("");
+  }
+
+  function updateProgress() {
+    const current = state.currentStep;
+    const total = STEPS.length;
+    const percent = Math.round(((current + 1) / total) * 100);
+
+    const pt = $("#progressText");
+    const pf = $("#progressFill");
+    const track = $("#progressTrack");
+    const prev = $("#prevBtn");
+    const next = $("#nextBtn");
+    const hint = $("#footerHint");
+
+    if (pt) pt.textContent = `مرحله ${faNum(current + 1)} از ${faNum(total)}`;
+    if (pf) pf.style.width = percent + "%";
+    if (track) track.setAttribute("aria-valuenow", String(percent));
+
+    $$(".step-item[data-step]").forEach(btn => {
+      const i = Number(btn.dataset.step);
+      btn.classList.toggle("active", i === current);
+      btn.classList.toggle("completed", i < current || state.completedSteps.includes(i));
+      if (i === current) btn.setAttribute("aria-current", "step");
+      else btn.removeAttribute("aria-current");
+    });
+
+    if (prev) prev.disabled = current === 0;
+    if (next) {
+      next.textContent = current === total - 1 ? "پایان" : "مرحله بعد →";
+      next.disabled = current === total - 1;
+    }
+    if (hint) {
+      hint.textContent = current === total - 1
+        ? "پرامپت را بررسی کن و برای ابزار هوش مصنوعی کپی بگیر."
+        : "انتخاب‌ها ذخیره می‌شوند؛ هر زمان خواستی می‌توانی برگردی.";
+    }
+  }
+
+  function updateFinalReview() {
+    const preview = $("#promptPreview");
+    const review = $("#finalReview");
+    const prompt = generatePrompt();
+    if (preview) preview.textContent = prompt;
+    if (review) {
+      review.innerHTML = `
+        <div class="review-item">
+          <div><div class="review-label">نام بازی</div><div class="review-value">${escapeHTML(text("gameName","بازی جدید"))}</div></div>
+        </div>
+        <div class="review-item">
+          <div><div class="review-label">نوع بازی</div><div class="review-value">${escapeHTML(choice("gameType","مشخص نشده"))}</div></div>
+        </div>
+        <div class="review-item">
+          <div><div class="review-label">ایده</div><div class="review-value">${escapeHTML(text("gameIdea","ایده هنوز تکمیل نشده است."))}</div></div>
+        </div>
+        <div class="review-item">
+          <div><div class="review-label">قالب خروجی</div><div class="review-value">${escapeHTML(choice("outputFormat","یک فایل HTML"))}</div></div>
+        </div>
+        <div class="review-item">
+          <div><div class="review-label">پیچیدگی</div><div class="review-value">${escapeHTML(choice("complexity","نمونه اولیه"))}</div></div>
+        </div>
+      `;
+    }
+  }
+
+  /* =====================================================
+     NAVIGATION
+  ===================================================== */
+  function renderStepsList() {
+    const list = $("#stepsList");
+    if (!list) return;
+    list.innerHTML = STEPS.map((_, i) => `
+      <button class="step-item" type="button" data-step="${i}">
+        <span class="step-number">${faNum(i + 1)}</span>
+        <div class="step-info">
+          <div class="step-label">${STEP_LABELS[i][0]}</div>
+          <div class="step-description">${STEP_LABELS[i][1]}</div>
+        </div>
+      </button>
+    `).join("");
+  }
+
+  function renderCurrentStep() {
+    const i = state.currentStep;
+    const step = STEPS[i];
+    const content = $("#wizardContent");
+    if (!step || !content) return;
+
+    const kicker = $("#stepKicker");
+    const heading = $("#stepHeading");
+    const subtitle = $("#stepSubtitle");
+    if (kicker) kicker.textContent = step.kicker;
+    if (heading) heading.textContent = step.title;
+    if (subtitle) subtitle.textContent = step.subtitle;
+
+    content.innerHTML = RENDERERS[i]();
+    restore();
+    updateConditionalFields();
+    updateProgress();
+    updateSummary();
+    if (i === STEPS.length - 1) updateFinalReview();
+    save();
+  }
+
+  function markComplete(idx) {
+    if (!state.completedSteps.includes(idx)) state.completedSteps.push(idx);
+  }
+
+  function goTo(idx) {
+    collect();
+    if (!Number.isInteger(idx) || idx < 0 || idx >= STEPS.length) return;
+    if (idx > state.currentStep) markComplete(state.currentStep);
+    state.currentStep = idx;
+    save();
+    renderCurrentStep();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function next() {
+    collect();
+    if (state.currentStep === 0 && !text("gameIdea") && !text("gameType")) {
+      showToast("برای شروع، نوع بازی یا ایده‌ات را وارد کن.", "info");
+      return;
+    }
+    if (state.currentStep < STEPS.length - 1) {
+      markComplete(state.currentStep);
+      goTo(state.currentStep + 1);
+    }
+  }
+
+  function prev() {
+    if (state.currentStep > 0) goTo(state.currentStep - 1);
+  }
+
+  /* =====================================================
+     COPY / DOWNLOAD / RESET
+  ===================================================== */
+  async function copyPrompt() {
+    collect();
+    const prompt = generatePrompt();
+
+    // Method 1: modern Clipboard API
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(prompt);
+        showToast("پرامپت کپی شد؛ حالا آن را در ابزار هوش مصنوعی قرار بده.", "success");
+        return;
+      }
+    } catch (e) { /* fall through */ }
+
+    // Method 2: execCommand textarea fallback
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = prompt;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.top = "-9999px";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, prompt.length);
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      if (ok) {
+        showToast("پرامپت کپی شد؛ حالا آن را در ابزار هوش مصنوعی قرار بده.", "success");
+        return;
+      }
+    } catch (e) { /* fall through */ }
+
+    // Method 3: select the preview text so the user can Ctrl+C
+    const preview = $("#promptPreview");
+    if (preview) {
+      try {
+        const range = document.createRange();
+        range.selectNodeContents(preview);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } catch (e) {}
+      showToast("کپی خودکار ممکن نشد؛ متن انتخاب شد — با Ctrl+C (یا ⌘+C) کپی کن.", "error", 5000);
+    } else {
+      showToast("کپی ناموفق بود؛ متن را دستی انتخاب و کپی کن.", "error", 5000);
+    }
+  }
+
+  function downloadPrompt() {
+    try {
+      collect();
+      const prompt = generatePrompt();
+      const safeName = (text("gameName", "gamecraft-prompt") || "gamecraft-prompt")
+        .replace(/[\\/:*?"<>|\r\n]/g, "-")
+        .trim()
+        .slice(0, 60) || "gamecraft-prompt";
+      const fileName = safeName + ".txt";
+
+      // Prepend BOM so Windows Notepad shows Persian correctly
+      const blob = new Blob(["\uFEFF" + prompt], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.rel = "noopener";
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 1500);
+
+      showToast("فایل «" + fileName + "» دانلود شد.", "success");
+    } catch (e) {
+      console.error("Download failed:", e);
+      showToast("دانلود ناموفق بود. متن پیش‌نمایش را دستی کپی کن.", "error", 4000);
+    }
+  }
+
+  function reset() {
+    if (!confirm("تمام انتخاب‌های ذخیره‌شده پاک شوند و از ابتدا شروع کنی؟")) return;
+    state.currentStep = 0;
+    state.answers = {};
+    state.completedSteps = [];
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    renderCurrentStep();
+    showToast("فرم از ابتدا شروع شد.", "info");
+  }
+
+  /* =====================================================
+     EVENT BINDING
+  ===================================================== */
+  function bind() {
+    $("#prevBtn")?.addEventListener("click", prev);
+    $("#nextBtn")?.addEventListener("click", next);
+    $("#resetBtn")?.addEventListener("click", reset);
+
+    // Steps list is re-rendered per step, so use event delegation
+    $("#stepsList")?.addEventListener("click", (e) => {
+      const btn = e.target.closest(".step-item[data-step]");
+      if (!btn) return;
+      goTo(Number(btn.dataset.step));
+    });
+
+    // Delegated form events
+    const content = $("#wizardContent");
+    if (content) {
+      const handler = (e) => {
+        if (!e.target.matches("[data-group], [data-field]")) return;
+        collect();
+        updateConditionalFields();
+        updateSummary();
+        if (state.currentStep === STEPS.length - 1) updateFinalReview();
+        save();
+      };
+      content.addEventListener("input", handler);
+      content.addEventListener("change", handler);
+
+      // Delegated clicks for step 8 buttons
+      content.addEventListener("click", (e) => {
+        const target = e.target.closest("button");
+        if (!target) return;
+        if (target.id === "copyPromptBtn") { e.preventDefault(); copyPrompt(); }
+        else if (target.id === "downloadPromptBtn") { e.preventDefault(); downloadPrompt(); }
+        else if (target.id === "refreshPromptBtn") {
+          e.preventDefault();
+          collect();
+          updateFinalReview();
+          showToast("پرامپت به‌روزرسانی شد.", "info");
+        }
+      });
+    }
+  }
+
+  /* =====================================================
+     INIT
+  ===================================================== */
+  function init() {
+    initTheme();
+    load();
+    renderStepsList();
+    bind();
+    renderCurrentStep();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, { once: true });
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
